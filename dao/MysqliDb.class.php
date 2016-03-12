@@ -14,6 +14,7 @@ class MysqliDb
     private $data;
     private $port;
     public $conn;
+    private $rs_type = MYSQLI_ASSOC;
 
     private function __construct($config = array())
     {
@@ -40,7 +41,7 @@ class MysqliDb
         return self::$_interface;
     }
 
-    private function query($sql)
+    public function query($sql)
     {
         $result = mysqli_query($this->conn,$sql);
         if(!$result){
@@ -48,9 +49,32 @@ class MysqliDb
         }
         return $result;
     }
-    private function get_all()
+    public function getAll($sql = "", $primary = "")
     {
-
+        $result = $this->query($sql);
+        if(!$result) {
+            return false;
+        }
+        while ($rows = mysqli_fetch_array($result, $this->rs_type)) {
+            if($primary && $rows[$primary]) {
+                $rs[$rows[$primary]] = $rows;
+            } else {
+                $rs[] = $rows;
+            }
+        }
+        return (isset($rs) ? $rs : false);
     }
-
+    public function getOne($sql = "")
+    {
+        $result = $this->query($sql);
+        if(!$result) {
+            return false;
+        }
+        $rows = mysqli_fetch_array($result, $this->rs_type);
+        return $rows;
+    }
+    public function insertId()
+    {
+        return mysqli_insert_id($this->conn);
+    }
 }
